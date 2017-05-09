@@ -1,0 +1,71 @@
+<html>
+    <head>
+        <script src="https://www.gstatic.com/firebasejs/3.9.0/firebase.js"></script>
+        <script>
+          // Initialize Firebase
+          var config = {
+            apiKey: "AIzaSyD78r5SMMcFsbjHRx2dcVUOAEmmmkibkxk",
+            authDomain: "pierre-squares.firebaseapp.com",
+            databaseURL: "https://pierre-squares.firebaseio.com",
+            projectId: "pierre-squares",
+            storageBucket: "pierre-squares.appspot.com",
+            messagingSenderId: "747219513597"
+          };
+          firebase.initializeApp(config);
+          var database = firebase.database();
+        </script>
+
+
+    </head>
+
+    <body>
+        <div id="root"></div>
+
+        <canvas id="myCanvas"></canvas>
+
+        <script type="text/javascript">
+            /*
+            * Allow clicks on the page to draw squares
+            * size of squares is optional (can change?)
+            * click coords should be center of square
+            * Store squares in FB DB for this specific visitor
+            * random color for this visitor
+            * draw other squares from DB
+            * clicking other peoples squares should delete those squares
+            * keep a count as "score"
+            */
+
+            var root = document.getElementById("root");
+            console.log(root);
+            // root.innerHTML = "click to draw squares";
+            var squareCount = 0;
+
+            var c = document.getElementById("myCanvas");
+            c.width = window.innerWidth;
+            c.height = window.innerHeight;
+
+            document.onclick = function(event) {
+                drawSquare(event.clientX, event.clientY, 50);
+            };
+
+            function drawSquare(x, y, sz){
+              console.log("Drawing a square at: ");
+              console.log("X: " + x + ", Y: " + y + ", Size: " + sz);
+              var ctx = c.getContext("2d");
+              ctx.rect(x - (sz/2), y - (sz/2), sz, sz);
+              ctx.stroke();
+              writeSquare(squareCount, x, y, sz);
+            }
+
+            function writeSquare(num, x, y, sz) {
+              firebase.database().ref('squarelist/' + 'square'+num).set({
+                x: x,
+                y: y,
+                size: sz
+              });
+              squareCount += 1;
+            }
+
+        </script>
+    </body>
+</html>
