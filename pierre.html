@@ -45,6 +45,8 @@
     var squareColor = "#"+((1<<24)*Math.random()|0).toString(16);
     var personCount = 0;
 
+    var squareArray = [];
+
     var c = document.getElementById("myCanvas");
     c.width = window.innerWidth;
     c.height = window.innerHeight;
@@ -53,7 +55,9 @@
       drawSquare(event.clientX, event.clientY, 50);
     };
 
-    setupPerson();
+    loadExistingSquares();
+
+    // setupPerson();
 
     function setupPerson(){
 
@@ -74,11 +78,8 @@
       var date = new Date();
       var pid = date.getTime();
 
-      var pcolor = ((1<<24)*Math.random()|0).toString(16);
+      var pcolor = "#"+((1<<24)*Math.random()|0).toString(16);
       squareColor = pcolor;
-
-
-      console.log(personCount);
 
       document.cookie = "id" + "=" + pid;
       document.cookie = "color" + "=" + pcolor;
@@ -111,24 +112,43 @@
       return "";
     }
 
-
     function drawSquare(x, y, sz){
+
       console.log("Drawing a square at: ");
       console.log("X: " + x + ", Y: " + y + ", Size: " + sz);
+
       var ctx = c.getContext("2d");
-      ctx.rect(x - (sz/2), y - (sz/2), sz, sz);
-      ctx.stroke();
       ctx.strokeStyle = squareColor;
-      // writeSquare(squareCount, x, y, sz);
+      ctx.strokeRect(x - (sz/2), y - (sz/2), sz, sz);
+      
+      writeSquare(squareCount, x, y, sz, squareColor);
     }
 
     function writeSquare(num, x, y, sz) {
       firebase.database().ref('squarelist/' + 'square'+num).set({
         x: x,
         y: y,
-        size: sz
+        size: sz,
+        color: squareColor
       });
       squareCount += 1;
+    }
+
+    function loadExistingSquares(){
+
+      var query = firebase.database().ref("squarelist").orderByKey();
+      query.once("value")
+        .then(function(snapshot) {
+          snapshot.forEach(function(childSnapshot) {
+            var childData = childSnapshot.val();
+
+            var ctx = c.getContext("2d");
+            ctx.strokeStyle = childData.color;
+            ctx.strokeRect(childData.x, childData.y, childData.size, childData.size);
+
+        });
+      });
+
     }
 
     </script>
