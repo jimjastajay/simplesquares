@@ -1,71 +1,136 @@
 <html>
-    <head>
-        <script src="https://www.gstatic.com/firebasejs/3.9.0/firebase.js"></script>
-        <script>
-          // Initialize Firebase
-          var config = {
-            apiKey: "AIzaSyD78r5SMMcFsbjHRx2dcVUOAEmmmkibkxk",
-            authDomain: "pierre-squares.firebaseapp.com",
-            databaseURL: "https://pierre-squares.firebaseio.com",
-            projectId: "pierre-squares",
-            storageBucket: "pierre-squares.appspot.com",
-            messagingSenderId: "747219513597"
-          };
-          firebase.initializeApp(config);
-          var database = firebase.database();
-        </script>
+  <head>
+    <script src="https://www.gstatic.com/firebasejs/3.9.0/firebase.js"></script>
+    <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyD78r5SMMcFsbjHRx2dcVUOAEmmmkibkxk",
+      authDomain: "pierre-squares.firebaseapp.com",
+      databaseURL: "https://pierre-squares.firebaseio.com",
+      projectId: "pierre-squares",
+      storageBucket: "pierre-squares.appspot.com",
+      messagingSenderId: "747219513597"
+    };
+    firebase.initializeApp(config);
+    var database = firebase.database();
+    </script>
 
 
-    </head>
+  </head>
 
-    <body>
-        <div id="root"></div>
+  <body>
 
-        <canvas id="myCanvas"></canvas>
+    <div id="root"></div>
 
-        <script type="text/javascript">
-            /*
-            * Allow clicks on the page to draw squares
-            * size of squares is optional (can change?)
-            * click coords should be center of square
-            * Store squares in FB DB for this specific visitor
-            * random color for this visitor
-            * draw other squares from DB
-            * clicking other peoples squares should delete those squares
-            * keep a count as "score"
-            */
+    <canvas id="myCanvas"></canvas>
 
-            var root = document.getElementById("root");
-            console.log(root);
-            // root.innerHTML = "click to draw squares";
-            var squareCount = 0;
+    <script type="text/javascript">
+    /*
+    * Allow clicks on the page to draw squares
+    * size of squares is optional (can change?)
+    * click coords should be center of square
+    * Store squares in FB DB for this specific visitor
+    * random color for this visitor
+    * draw other squares from DB
+    * clicking other peoples squares should delete those squares
+    * keep a count as "score"
+    */
 
-            var c = document.getElementById("myCanvas");
-            c.width = window.innerWidth;
-            c.height = window.innerHeight;
+    var root = document.getElementById("root");
 
-            document.onclick = function(event) {
-                drawSquare(event.clientX, event.clientY, 50);
-            };
+    // console.log(root);
+    // root.innerHTML = "click to draw squares";
 
-            function drawSquare(x, y, sz){
-              console.log("Drawing a square at: ");
-              console.log("X: " + x + ", Y: " + y + ", Size: " + sz);
-              var ctx = c.getContext("2d");
-              ctx.rect(x - (sz/2), y - (sz/2), sz, sz);
-              ctx.stroke();
-              writeSquare(squareCount, x, y, sz);
-            }
+    var squareCount = 0;
+    var squareColor = "#"+((1<<24)*Math.random()|0).toString(16);
+    var personCount = 0;
 
-            function writeSquare(num, x, y, sz) {
-              firebase.database().ref('squarelist/' + 'square'+num).set({
-                x: x,
-                y: y,
-                size: sz
-              });
-              squareCount += 1;
-            }
+    var c = document.getElementById("myCanvas");
+    c.width = window.innerWidth;
+    c.height = window.innerHeight;
 
-        </script>
-    </body>
+    document.onclick = function(event) {
+      drawSquare(event.clientX, event.clientY, 50);
+    };
+
+    setupPerson();
+
+    function setupPerson(){
+
+      var id = getCookie("id");
+      if (id != "") {
+          console.log("Loading existing person: id: " + id + "; Color: " + getCookie("color"));
+      } else {
+          console.log("New user. Creating person.");
+          return firebase.database().ref('/peoplecount/count').once('value').then(function(snapshot) {
+            personCount = snapshot.val();
+            createPerson();
+          });
+
+      }
+    }
+
+    function createPerson(){
+      var date = new Date();
+      var pid = date.getTime();
+
+      var pcolor = ((1<<24)*Math.random()|0).toString(16);
+      squareColor = pcolor;
+
+
+      console.log(personCount);
+
+      document.cookie = "id" + "=" + pid;
+      document.cookie = "color" + "=" + pcolor;
+
+      console.log("Creating new person: " + pid + "; Color: " + pcolor);
+
+      firebase.database().ref('people/' + 'person' + personCount).set({
+        id: pid,
+        color: pcolor
+      });
+
+      firebase.database().ref('peoplecount/').set({
+        count: personCount + 1
+      });
+
+    }
+
+    function getCookie(cookie){
+      var person = cookie + "=";
+      var ck = document.cookie.split(';');
+      for(var i = 0; i < ck.length; i++) {
+        var c = ck[i];
+        while (c.charAt(0) == ' ') {
+          c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+          return c.substring(name.length, c.length);
+        }
+      }
+      return "";
+    }
+
+
+    function drawSquare(x, y, sz){
+      console.log("Drawing a square at: ");
+      console.log("X: " + x + ", Y: " + y + ", Size: " + sz);
+      var ctx = c.getContext("2d");
+      ctx.rect(x - (sz/2), y - (sz/2), sz, sz);
+      ctx.stroke();
+      ctx.strokeStyle = squareColor;
+      // writeSquare(squareCount, x, y, sz);
+    }
+
+    function writeSquare(num, x, y, sz) {
+      firebase.database().ref('squarelist/' + 'square'+num).set({
+        x: x,
+        y: y,
+        size: sz
+      });
+      squareCount += 1;
+    }
+
+    </script>
+  </body>
 </html>
