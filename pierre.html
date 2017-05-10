@@ -120,11 +120,12 @@
       var ctx = c.getContext("2d");
       ctx.strokeStyle = squareColor;
       ctx.strokeRect(x - (sz/2), y - (sz/2), sz, sz);
-      
+
       writeSquare(squareCount, x, y, sz, squareColor);
     }
 
     function writeSquare(num, x, y, sz) {
+
       firebase.database().ref('squarelist/' + 'square'+num).set({
         x: x,
         y: y,
@@ -132,6 +133,9 @@
         color: squareColor
       });
       squareCount += 1;
+      firebase.database().ref('squarecount/').set({
+        count: squareCount
+      });
     }
 
     function loadExistingSquares(){
@@ -148,6 +152,12 @@
 
         });
       });
+
+      return firebase.database().ref('/squarecount/count').once('value').then(function(snapshot) {
+        squareCount = snapshot.val();
+        console.log("# " + squareCount);
+      });
+
 
     }
 
