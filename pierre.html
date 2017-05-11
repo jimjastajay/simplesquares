@@ -41,20 +41,48 @@
     // root.innerHTML = "click to draw squares";
 
     var squareCount = 0;
-
     var squareList = firebase.database().ref('squarelist');
-
     var squareColor = "#"+((1<<24)*Math.random()|0).toString(16);
+    var squareSize = 50;
+    var squareArray = [];
+
     var personCount = 0;
 
-    var squareArray = [];
 
     var c = document.getElementById("myCanvas");
     c.width = window.innerWidth;
     c.height = window.innerHeight;
 
     document.onclick = function(event) {
-      drawSquare(event.clientX, event.clientY, 50);
+
+      var makeNewSquare = true;
+
+      for(var i = 0; i < squareArray.length; i++){
+
+        if(isBetween(event.clientX, squareArray[i].x, squareArray[i].x + squareArray[i].sz) &&
+            isBetween(event.clientY, squareArray[i].y, squareArray[i].y + squareArray[i].sz)){
+              makeNewSquare = false;
+
+              var x = squareArray[i].x;
+              var y = squareArray[i].y;
+              var sz = squareArray[i].sz;
+
+              var ctx = c.getContext("2d");
+              ctx.strokeStyle = squareColor;
+              ctx.strokeRect(x, y, sz, sz);
+
+              firebase.database().ref('squarelist/' + 'square_'+ i).set({
+                x: x,
+                y: y,
+                size: sz,
+                color: squareColor
+              });
+        }
+      }
+
+      if(makeNewSquare){
+        drawSquare(event.clientX - squareSize/2, event.clientY - squareSize/2, squareSize);
+      }
     };
 
     loadExistingSquares();
@@ -110,11 +138,12 @@
 
     function drawSquare(x, y, sz){
       writeSquare(squareCount, x, y, sz, squareColor);
+      squareArray.push({x, y, sz, squareColor});
     }
 
     function writeSquare(num, x, y, sz) {
 
-      firebase.database().ref('squarelist/' + 'square'+num).set({
+      firebase.database().ref('squarelist/' + 'square_'+num).set({
         x: x,
         y: y,
         size: sz,
@@ -134,10 +163,11 @@
           snapshot.forEach(function(childSnapshot) {
             var childData = childSnapshot.val();
 
-            var ctx = c.getContext("2d");
-            ctx.strokeStyle = childData.color;
-            ctx.strokeRect(childData.x - (childData.size/2), childData.y  - (childData.size/2), childData.size, childData.size);
-
+            var x = childData.x;
+            var y = childData.y;
+            var sz = childData.size;
+            var color = childData.color;
+            squareArray.push({x, y, sz, color});
         });
       });
 
@@ -147,16 +177,26 @@
 
     }
 
+    function isBetween(val, min, max){
+      var res = false;
+      if(val >= min && val <= max){
+        res = true;
+      }
+      else{
+        res = false;
+      }
+      return res;
+    }
+
     squareList.on('child_added', function(snapshot) {
 
       // console.log(snapshot.val());
       // console.log("Drawing a square at: ");
       // console.log("X: " + snapshot.val().x + ", Y: " + snapshot.val().y + ", Size: " + snapshot.val().size);
-
       var ctx = c.getContext("2d");
       ctx.strokeStyle = snapshot.val().color;
-      ctx.strokeRect(snapshot.val().x - (snapshot.val().size/2), snapshot.val().y
-      - (snapshot.val().size/2), snapshot.val().size, snapshot.val().size);
+      ctx.strokeRect(snapshot.val().x, snapshot.val().y, snapshot.val().size, snapshot.val().size);
+
     });
 
 
