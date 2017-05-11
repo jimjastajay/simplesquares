@@ -57,13 +57,16 @@
 
     loadExistingSquares();
 
-    // setupPerson();
+    setupPerson();
 
     function setupPerson(){
 
       var id = getCookie("id");
-      if (id != "") {
-          console.log("Loading existing person: id: " + id + "; Color: " + getCookie("color"));
+
+      if (id != undefined) {
+          console.log("Loading existing person: id: " + getCookie("id") + "; Color: " + getCookie("color"));
+          squareColor = getCookie("color");
+
       } else {
           console.log("New user. Creating person.");
           return firebase.database().ref('/peoplecount/count').once('value').then(function(snapshot) {
@@ -81,8 +84,8 @@
       var pcolor = "#"+((1<<24)*Math.random()|0).toString(16);
       squareColor = pcolor;
 
-      document.cookie = "id" + "=" + pid;
-      document.cookie = "color" + "=" + pcolor;
+      document.cookie = "id=" + pid;
+      document.cookie = "color=" + pcolor;
 
       console.log("Creating new person: " + pid + "; Color: " + pcolor);
 
@@ -97,19 +100,11 @@
 
     }
 
-    function getCookie(cookie){
-      var person = cookie + "=";
-      var ck = document.cookie.split(';');
-      for(var i = 0; i < ck.length; i++) {
-        var c = ck[i];
-        while (c.charAt(0) == ' ') {
-          c = c.substring(1);
-        }
-        if (c.indexOf(name) == 0) {
-          return c.substring(name.length, c.length);
-        }
-      }
-      return "";
+    function getCookie(c) {
+      var val = "; " + document.cookie;
+      var line = val.split("; " + c + "=");
+      if (line.length == 2)
+        return line.pop().split(";").shift();
     }
 
     function drawSquare(x, y, sz){
@@ -155,7 +150,6 @@
 
       return firebase.database().ref('/squarecount/count').once('value').then(function(snapshot) {
         squareCount = snapshot.val();
-        console.log("# " + squareCount);
       });
 
 
