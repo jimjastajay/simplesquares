@@ -46,7 +46,10 @@
     var squareSize = 50;
     var squareArray = [];
 
+    var personID;
     var personCount = 0;
+    var whichPerson = "";
+    var currentScore = 0;
 
 
     var c = document.getElementById("myCanvas");
@@ -71,18 +74,32 @@
               ctx.strokeStyle = squareColor;
               ctx.strokeRect(x, y, sz, sz);
 
-              firebase.database().ref('squarelist/' + 'square_'+ i).set({
-                x: x,
-                y: y,
-                size: sz,
-                color: squareColor
-              });
+              // firebase.database().ref('squarelist/' + 'square_'+ i).set({
+              //   x: x,
+              //   y: y,
+              //   size: sz,
+              //   color: squareColor
+              // });
+
+              // firebase.database().ref('people/' + whichPerson).set({
+              //   id: pid,
+              //   color: squareColor,
+              //   score: currentScore += 1
+              // });
         }
       }
 
       if(makeNewSquare){
         drawSquare(event.clientX - squareSize/2, event.clientY - squareSize/2, squareSize);
+
+        // firebase.database().ref('people/' + whichPerson).set({
+        //   id: pid,
+        //   color: pcolor,
+        //   score: currentScore += 1
+        // });
+
       }
+
     };
 
     loadExistingSquares();
@@ -95,6 +112,18 @@
       if (id != undefined) {
           console.log("Loading existing person: id: " + getCookie("id") + "; Color: " + getCookie("color"));
           squareColor = getCookie("color");
+
+          var query = firebase.database().ref("people").orderByKey();
+
+          query.once("value")
+            .then(function(snapshot) {
+              snapshot.forEach(function(childSnapshot) {
+                var childData = childSnapshot.val();
+                var personID = childData.id;
+                console.log(personID);
+            });
+          });
+
 
       } else {
           console.log("New user. Creating person.");
@@ -118,10 +147,14 @@
 
       console.log("Creating new person: " + pid + "; Color: " + pcolor);
 
-      firebase.database().ref('people/' + 'person' + personCount).set({
+      firebase.database().ref('people/' + 'person_' + personCount).set({
         id: pid,
-        color: pcolor
+        color: pcolor,
+        score: 0
       });
+
+      whichPerson = "person_" + personCount;
+      console.log(whichPerson);
 
       firebase.database().ref('peoplecount/').set({
         count: personCount + 1
@@ -158,6 +191,7 @@
     function loadExistingSquares(){
 
       var query = firebase.database().ref("squarelist").orderByKey();
+
       query.once("value")
         .then(function(snapshot) {
           snapshot.forEach(function(childSnapshot) {
