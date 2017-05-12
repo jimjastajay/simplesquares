@@ -90,13 +90,17 @@
       }
 
       if(makeNewSquare){
+
         drawSquare(event.clientX - squareSize/2, event.clientY - squareSize/2, squareSize);
 
-        // firebase.database().ref('people/' + whichPerson).set({
-        //   id: pid,
-        //   color: pcolor,
-        //   score: currentScore += 1
-        // });
+        console.log("making a new square for " + whichPerson);
+        currentScore += 1;
+
+        firebase.database().ref('people/' + whichPerson).set({
+          id: personID,
+          color: squareColor,
+          score: currentScore
+        });
 
       }
 
@@ -118,14 +122,25 @@
           query.once("value")
             .then(function(snapshot) {
               snapshot.forEach(function(childSnapshot) {
+
                 var childData = childSnapshot.val();
-                var personID = childData.id;
-                console.log(personID);
+
+                if(getCookie("id") == childData.id){
+
+                  console.log("Found person, loading score.");
+                  currentScore = childData.score;
+                  personID = childData.id;
+                  whichPerson = "person_" + personID;
+                  console.log("person: " + whichPerson);
+
+                }
+
             });
           });
 
 
       } else {
+
           console.log("New user. Creating person.");
           return firebase.database().ref('/peoplecount/count').once('value').then(function(snapshot) {
             personCount = snapshot.val();
@@ -136,6 +151,7 @@
     }
 
     function createPerson(){
+
       var date = new Date();
       var pid = date.getTime();
 
@@ -147,14 +163,14 @@
 
       console.log("Creating new person: " + pid + "; Color: " + pcolor);
 
-      firebase.database().ref('people/' + 'person_' + personCount).set({
+      firebase.database().ref('people/' + 'person_' + pid).set({
         id: pid,
         color: pcolor,
         score: 0
       });
 
-      whichPerson = "person_" + personCount;
-      console.log(whichPerson);
+      personID = pid;
+      whichPerson = "person_" + pid;
 
       firebase.database().ref('peoplecount/').set({
         count: personCount + 1
@@ -235,5 +251,7 @@
 
 
     </script>
+
   </body>
+
 </html>
